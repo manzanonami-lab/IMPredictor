@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lottery Predictor</title>
+<style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+    h1 { text-align: center; }
+    form { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+    input, select, button { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ccc; }
+    .result { max-width: 400px; margin: 20px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+</style>
+</head>
+<body>
+
+<h1>Lottery Predictor</h1>
+
+<form id="drawForm">
+    <label>Timestamp:</label>
+    <input type="datetime-local" id="timestamp" required>
+
+    <label>Issue Number:</label>
+    <input type="text" id="issue" placeholder="e.g. 8260315237" required>
+
+    <label>Winning Number (1-80):</label>
+    <input type="number" id="number" min="1" max="80" required>
+
+    <label>Result:</label>
+    <select id="result" required>
+        <option value="Odd">Odd</option>
+        <option value="Even">Even</option>
+    </select>
+
+    <button type="submit">Add Result & Predict</button>
+</form>
+
+<div class="result" id="predictionResult" style="display:none;">
+    <h2>Prediction</h2>
+    <p id="parity"></p>
+    <p id="top3"></p>
+    <p id="cold3"></p>
+    <p id="streaks"></p>
+</div>
+
+<script>
+const form = document.getElementById('drawForm');
+const predictionDiv = document.getElementById('predictionResult');
+
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Get input values
+    const timestamp = document.getElementById('timestamp').value;
+    const issue = document.getElementById('issue').value;
+    const number = parseInt(document.getElementById('number').value);
+    const result = document.getElementById('result').value;
+
+    // POST new result
+    const addResponse = await fetch('https://your-app.onrender.com/add-result', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timestamp, issue, number, result })
+    });
+    const addData = await addResponse.json();
+
+    // GET prediction
+    const predictResponse = await fetch('https://your-app.onrender.com/predict');
+    const predictData = await predictResponse.json();
+
+    // Show results
+    predictionDiv.style.display = 'block';
+    document.getElementById('parity').innerText = `Next Parity Prediction: ${predictData.parity_prediction}`;
+    document.getElementById('top3').innerText = `Top 3 Hot Numbers: ${predictData.top3_numbers.join(', ')}`;
+    document.getElementById('cold3').innerText = `Cold Numbers: ${predictData.cold3_numbers.join(', ')}`;
+    document.getElementById('streaks').innerText = `Max Odd Streak: ${predictData.max_odd_streak}, Max Even Streak: ${predictData.max_even_streak}`;
+});
+</script>
+
+</body>
+</html>
