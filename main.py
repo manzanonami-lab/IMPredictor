@@ -4,21 +4,15 @@ import pandas as pd
 import os
 from fastapi.responses import FileResponse
 
-# -----------------------------
-# Create FastAPI app
-# -----------------------------
+# FastAPI app
 app = FastAPI(title="Smart Lottery Predictor")
 
-# -----------------------------
-# Serve the web form (dashboard)
-# -----------------------------
+# Serve the dashboard HTML
 @app.get("/dashboard")
 def dashboard():
     return FileResponse("index.html")
 
-# -----------------------------
-# User input model
-# -----------------------------
+# Input model
 class DrawInput(BaseModel):
     timestamp: str
     issue: str
@@ -27,16 +21,12 @@ class DrawInput(BaseModel):
 
 DATA_FILE = "draws.csv"
 
-# -----------------------------
-# Ensure dataset exists
-# -----------------------------
+# Ensure CSV exists
 if not os.path.exists(DATA_FILE):
     df = pd.DataFrame(columns=["timestamp","issue","number","result"])
     df.to_csv(DATA_FILE, index=False)
 
-# -----------------------------
 # Add new draw result
-# -----------------------------
 @app.post("/add-result")
 def add_result(draw: DrawInput):
     df = pd.read_csv(DATA_FILE)
@@ -52,9 +42,7 @@ def add_result(draw: DrawInput):
     df.to_csv(DATA_FILE, index=False)
     return {"message": "Result added successfully", "latest_number": draw.number}
 
-# -----------------------------
 # Prediction engine
-# -----------------------------
 @app.get("/predict")
 def predict():
     df = pd.read_csv(DATA_FILE)
@@ -88,7 +76,7 @@ def predict():
     cold_ranked = sorted(score.items(), key=lambda x:x[1])
     cold3 = [n[0] for n in cold_ranked[:3]]
 
-    # Streak detection
+    # Max streaks
     streak_odd = streak_even = max_streak_odd = max_streak_even = 0
     for res in df['result']:
         if res == "Odd":
@@ -110,9 +98,7 @@ def predict():
         "max_even_streak": max_streak_even
     }
 
-# -----------------------------
 # Root endpoint
-# -----------------------------
 @app.get("/")
 def root():
     return {"message": "Smart Lottery Predictor API running. Use /predict or /add-result"}
